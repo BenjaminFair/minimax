@@ -15,7 +15,8 @@ typedef struct {
 
 typedef int Move;
 
-Move *get_moves(GameState *state, int *num_moves) {
+void *get_moves(void *s, int *num_moves) {
+    GameState *state = (GameState *) s;
     *num_moves = 0;
     if(state->stones > K) {
         *num_moves = K;
@@ -29,18 +30,20 @@ Move *get_moves(GameState *state, int *num_moves) {
         moves[i] = i+1; // can take 1,2,...,k
     }
     
-    return moves;
+    return (void *) moves;
 }
 
-void *free_moves(Move *moves) {
+void free_moves(void *moves) {
     free(moves);
 }
 
-void apply_move(GameState *state, Move *move) {
+void apply_move(void *s, void *move) {
+    GameState *state = (GameState *) s;
     state->stones -= *((int *) move);
 }
 
-int check_win(GameState *state) {
+int check_win(void *s) {
+    GameState *state = (GameState *) s;
     if(state->stones == 0) { // there's a winner
         return state->player ^ 1; // it's the other player
     } else {
@@ -48,8 +51,8 @@ int check_win(GameState *state) {
     }
 }
 
-int value(GameState *state) {
-    int win = check_win(state);
+int value(void *s) {
+    int win = check_win(s);
     
     if(win == -1) {
         return 0;
@@ -64,14 +67,14 @@ void print_state(GameState *state) {
     printf("There are %d stones left.  How many will Player %d take? ", state->stones, state->player+1);
 }
 
-void print_move(Move *move) {
+void print_move(void *move) {
     printf("%d\n", *((int *) move));
 }
 
-Move *get_player_move() {
+void *get_player_move() {
     int *move = (int *) malloc(sizeof(int));
     scanf("%d", move);
-    return move;
+    return (void *) move;
 }
 
 int main() {
@@ -81,18 +84,19 @@ int main() {
     state->stones = N;
     state->player = 0;
     
-    Game *g = mm_setup_game(state, get_moves, free_moves, apply_move, value);
+    MMGame *g = mm_setup_game((void *) state, get_moves, free_moves, apply_move, value);
     
-    while(check_win(state != -1) { // keep going until someone wins
+    while(check_win(state) != -1) { // keep going until someone wins
         print_state(state);
         if(state->player == 0) { // computer's move
-            Move *m = mm_suggest_move(g);
+            void *m = mm_suggest_move(g);
             print_move(m);
             apply_move(state, m);
             free_moves(m);
         } else { // human's move
-            Move *m = get_player_move();
+            void *m = (Move *) get_player_move();
             apply_move(state, m);
+            mm_register_move(g, m);
             free_moves(m);
         }
     }
