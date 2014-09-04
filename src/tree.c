@@ -26,6 +26,9 @@ int get_num_children(Node *root) {
 
 // Allocate <n> nodes
 Node **make_children(int n) {
+    if(n == 0) {
+        return NULL;
+    }
     Node **children = malloc(sizeof(Node *) * n);
     int i;
     for(i = 0; i < n; i++) {
@@ -69,11 +72,13 @@ void set_data(Node *node, void *data) {
 
 // Free entire tree
 void free_tree(Node *root) {
-    int i;
-    int num_children = get_num_children(root);
-    Node **children = get_children(root);
-    for(i = 0; i < num_children; i++) {
-        free_tree(children[i]);
+    if(root != NULL) {
+        int i;
+        int num_children = get_num_children(root);
+        Node **children = get_children(root);
+        for(i = 0; i < num_children; i++) {
+            free_tree(children[i]);
+        }
+        free_node(root);
     }
-    free_node(root);
 }
