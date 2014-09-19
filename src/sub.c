@@ -37,9 +37,15 @@ void free_moves(void *moves) {
     free(moves);
 }
 
-void apply_move(void *s, void *move) {
+void apply_move(void *s, void *m) {
     GameState *state = (GameState *) s;
-    state->stones -= *((int *) move);
+    int move = *((int *) m);
+    if(move > state->stones) {
+        state->stones = 0;
+    } else {
+        state->stones -= move;
+    }
+    state->player ^= 1;
 }
 
 int check_win(void *s) {
@@ -64,7 +70,7 @@ int value(void *s) {
 }
 
 void print_state(GameState *state) {
-    printf("There are %d stones left.  How many will Player %d take? ", state->stones, state->player+1);
+    printf("There are %2d stones left.  How many will Player %d take? ", state->stones, state->player+1);
 }
 
 void print_move(void *move) {
@@ -74,6 +80,10 @@ void print_move(void *move) {
 void *get_player_move() {
     int *move = (int *) malloc(sizeof(int));
     scanf("%d", move);
+    while(*move < 1 || *move > 3) {
+        printf("Improper move, please try again: ");
+        scanf("%d", move);
+    }
     return (void *) move;
 }
 
@@ -84,12 +94,12 @@ int main() {
     state->stones = N;
     state->player = 0;
     
-    MMGame *g = mm_setup_game((void *) state, get_moves, free_moves, apply_move, value);
+    MMGame *g = mm_setup_game((void *) state, get_moves, free_moves, apply_move, sizeof(Move), value);
     
-    while(check_win(state) != -1) { // keep going until someone wins
+    while(check_win(state) == -1) { // keep going until someone wins
         print_state(state);
         if(state->player == 0) { // computer's move
-            void *m = mm_suggest_move(g);
+            void *m = mm_suggest_move(g, -1);
             print_move(m);
             apply_move(state, m);
             free_moves(m);
